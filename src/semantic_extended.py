@@ -32,10 +32,7 @@ from .ast import (
     VarDecl,
     WhileStmt,
 )
-
-
-class SemanticError(RuntimeError):
-    pass
+from .errors import SemanticError
 
 
 class Symbol:

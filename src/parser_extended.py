@@ -32,13 +32,8 @@ from .ast import (
     VarDecl,
     WhileStmt,
 )
-from .lexer import Lexer, LexerError, Token, TokenType
-
-
-class ParseError(RuntimeError):
-    def __init__(self, message: str, token: Token):
-        super().__init__(f"ParseError at {token.line}:{token.column}: {message}")
-        self.token = token
+from .errors import ParserError
+from .lexer import Lexer, Token, TokenType
 
 
 class Parser:

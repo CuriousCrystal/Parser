@@ -27,10 +27,7 @@ from .ast import (
     VarDecl,
     WhileStmt,
 )
-
-
-class CodeGenerationError(RuntimeError):
-    pass
+from .errors import CodeGenerationError
 
 
 class CodeGenerator:

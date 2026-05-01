@@ -24,6 +24,8 @@ import enum
 from dataclasses import dataclass
 from typing import Generator
 
+from .errors import LexerError
+
 
 class TokenType(enum.Enum):
     EOF = "EOF"
@@ -89,13 +91,6 @@ class Token:
 
     def __repr__(self) -> str:
         return f"Token({self.type.name}, '{self.lexeme}', {self.line}:{self.column})"
-
-
-class LexerError(RuntimeError):
-    def __init__(self, message: str, line: int, column: int):
-        super().__init__(f"LexerError at {line}:{column}: {message}")
-        self.line = line
-        self.column = column
 
 
 class Lexer:

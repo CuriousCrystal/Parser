@@ -32,13 +32,8 @@ from .ast import (
     VarDecl,
     WhileStmt,
 )
-from .lexer import Lexer, LexerError, Token, TokenType
-
-
-class ParseError(RuntimeError):
-    def __init__(self, message: str, token: Token):
-        super().__init__(f"ParseError at {token.line}:{token.column}: {message}")
-        self.token = token
+from .errors import ParserError
+from .lexer import Lexer, Token, TokenType
 
 
 class Parser:
@@ -60,7 +55,7 @@ class Parser:
     def _expect(self, typ: TokenType) -> Token:
         if self.current.type == typ:
             return self._advance()
-        raise ParseError(f"Expected {typ.name}, found {self.current.type.name}", self.current)
+            raise ParserError(f"Expected {typ.name}, found {self.current.type.name}", self.current)
 
     def _match(self, *types: TokenType) -> bool:
         if self.current.type in types:
@@ -91,7 +86,7 @@ class Parser:
             elif self._is_type_specifier():
                 declarations.append(self._parse_declaration())
             else:
-                raise ParseError("Unexpected token at top level", self.current)
+                    raise ParserError("Unexpected token at top level", self.current)
         return Program(declarations)
 
     # ------------------------------------------------------------------
@@ -108,7 +103,7 @@ class Parser:
             typ = self._advance().lexeme
             return PrimitiveType(name=typ)
         
-        raise ParseError("Expected type specifier", self.current)
+            raise ParserError("Expected type specifier", self.current)
 
     def _parse_declarator(self, base_type: Type) -> tuple[Type, str]:
         """Parse declarator with * and [] modifiers (e.g., *ptr, arr[10])"""
@@ -118,7 +113,7 @@ class Parser:
         
         # Get the identifier name
         if not self._peek(TokenType.IDENTIFIER):
-            raise ParseError("Expected identifier in declarator", self.current)
+                raise ParserError("Expected identifier in declarator", self.current)
         name = self._advance().lexeme
         
         # Handle trailing [] (arrays)
@@ -146,7 +141,7 @@ class Parser:
         members: List[StructMember] = []
         while self.current.type != TokenType.RBRACE:
             if not self._is_type_specifier():
-                raise ParseError("Expected type in struct", self.current)
+                    raise ParserError("Expected type in struct", self.current)
             
             member_type = self._parse_type()
             member_decl_type, member_name = self._parse_declarator(member_type)
@@ -265,7 +260,7 @@ class Parser:
             expr = BinaryOp(left=expr, operator=operator, right=right)
         return expr
 
-    def _parse_relational(self) -> Expr:
+            expression = self._parse_expression()
         expr = self._parse_additive()
         while self.current.type in {TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE}:
             operator = self.current.lexeme
