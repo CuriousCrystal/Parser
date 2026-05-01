@@ -1,0 +1,16 @@
+FUNC main
+LOCAL int x
+STORE x 1
+global int sum
+STORE sum 0
+LABEL t0
+< t1 x 5
+JUMP_IF_FALSE t1 t2
++ t3 sum x
+STORE sum t3
++ t4 x 1
+STORE x t4
+JUMP t0
+LABEL t2
+RETURN sum
+END_FUNC main
