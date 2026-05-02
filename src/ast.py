@@ -149,6 +149,26 @@ class WhileStmt(Stmt):
     body: Stmt
 
 
+@dataclass(frozen=True)
+class ForStmt(Stmt):
+    init: Optional[Stmt]          # e.g. variable declaration or expression-statement
+    condition: Optional[Expr]     # loop guard (may be None → true)
+    update: Optional[Expr]        # executed after each iteration
+    body: Stmt                    # usually a CompoundStmt
+
+
+@dataclass(frozen=True)
+class ContinueStmt(Stmt):
+    """Jump to the next iteration of the innermost loop."""
+    pass
+
+
+@dataclass(frozen=True)
+class BreakStmt(Stmt):
+    """Exit the innermost loop."""
+    pass
+
+
 # ---------------------------------------------------------------------------
 # Declarations
 # ---------------------------------------------------------------------------

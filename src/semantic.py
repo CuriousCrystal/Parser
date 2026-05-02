@@ -9,11 +9,14 @@ from .ast import (
     ArrayInit,
     ArrayType,
     BinaryOp,
+    BreakStmt,
     CallExpr,
     CompoundStmt,
+    ContinueStmt,
     Dereference,
     Expr,
     ExprStmt,
+    ForStmt,
     FunctionDecl,
     Identifier,
     IfStmt,
@@ -114,7 +117,7 @@ class SemanticAnalyzer:
         self.scopes.pop()
         self.current_function_return = None
 
-    def _visit_statement(self, stmt: Stmt) -> None:
+    def _visit_statement(self, stmt: Stmt, loop_depth: int = 0) -> None:
         if isinstance(stmt, CompoundStmt):
             self.scopes.append({})
             for item in stmt.statements:
@@ -124,10 +127,17 @@ class SemanticAnalyzer:
                     if item.initializer:
                         self._expression_type(item.initializer)
                 else:
-                    self._visit_statement(item)
+                    self._visit_statement(item, loop_depth)
             self.scopes.pop()
             return
         
+        if isinstance(stmt, VarDecl):
+            item_type = self._normalize_type(stmt.var_type)
+            self._declare_variable(stmt.name, item_type)
+            if stmt.initializer:
+                self._expression_type(stmt.initializer)
+            return
+
         if isinstance(stmt, ExprStmt):
             self._expression_type(stmt.expr)
             return
@@ -140,14 +150,34 @@ class SemanticAnalyzer:
         
         if isinstance(stmt, IfStmt):
             self._expression_type(stmt.condition)
-            self._visit_statement(stmt.then_branch)
+            self._visit_statement(stmt.then_branch, loop_depth)
             if stmt.else_branch:
-                self._visit_statement(stmt.else_branch)
+                self._visit_statement(stmt.else_branch, loop_depth)
             return
         
         if isinstance(stmt, WhileStmt):
             self._expression_type(stmt.condition)
-            self._visit_statement(stmt.body)
+            self._visit_statement(stmt.body, loop_depth + 1)
+            return
+        
+        if isinstance(stmt, ForStmt):
+            # Analyze init
+            if stmt.init:
+                self._visit_statement(stmt.init, loop_depth)
+            # Condition
+            if stmt.condition:
+                self._expression_type(stmt.condition)
+            # Update
+            if stmt.update:
+                self._expression_type(stmt.update)
+            # Body
+            self._visit_statement(stmt.body, loop_depth + 1)
+            return
+        
+        if isinstance(stmt, ContinueStmt) or isinstance(stmt, BreakStmt):
+            if loop_depth == 0:
+                stmt_name = "continue" if isinstance(stmt, ContinueStmt) else "break"
+                self.errors.append(f"'{stmt_name}' used outside of a loop")
             return
 
     def _lookup_symbol(self, name: str) -> Optional[Symbol]:

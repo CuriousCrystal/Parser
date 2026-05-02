@@ -9,11 +9,14 @@ from .ast import (
     ArrayInit,
     ArrayType,
     BinaryOp,
+    BreakStmt,
     CallExpr,
     CompoundStmt,
+    ContinueStmt,
     Dereference,
     Expr,
     ExprStmt,
+    ForStmt,
     FunctionDecl,
     Identifier,
     Literal,
@@ -35,6 +38,8 @@ class CodeGenerator:
         self.instructions: List[str] = []
         self.temp_count = 0
         self.label_count = 0
+        self.loop_break_labels: List[str] = []
+        self.loop_continue_labels: List[str] = []
 
     def generate(self, program: Program) -> str:
         self.instructions.clear()
@@ -102,14 +107,56 @@ class CodeGenerator:
         if isinstance(stmt, WhileStmt):
             label_start = self._new_label()
             label_end = self._new_label()
+            self.loop_break_labels.append(label_end)
+            self.loop_continue_labels.append(label_start)
             self._emit(f"LABEL {label_start}")
             cond = self._generate_expression(stmt.condition)
             self._emit(f"JUMP_IF_FALSE {cond} {label_end}")
             self._generate_statement(stmt.body)
             self._emit(f"JUMP {label_start}")
             self._emit(f"LABEL {label_end}")
+            self.loop_break_labels.pop()
+            self.loop_continue_labels.pop()
             return
-        
+
+        if isinstance(stmt, ForStmt):
+            init_label = self._new_label()
+            continue_label = self._new_label()
+            break_label = self._new_label()
+            self.loop_break_labels.append(break_label)
+            self.loop_continue_labels.append(continue_label)
+
+            if stmt.init:
+                self._generate_statement(stmt.init)
+
+            self._emit(f"LABEL {init_label}")
+            if stmt.condition:
+                cond = self._generate_expression(stmt.condition)
+                self._emit(f"JUMP_IF_FALSE {cond} {break_label}")
+
+            self._generate_statement(stmt.body)
+            self._emit(f"LABEL {continue_label}")
+            if stmt.update:
+                self._generate_expression(stmt.update)
+            self._emit(f"JUMP {init_label}")
+            self._emit(f"LABEL {break_label}")
+
+            self.loop_break_labels.pop()
+            self.loop_continue_labels.pop()
+            return
+
+        if isinstance(stmt, ContinueStmt):
+            if not self.loop_continue_labels:
+                raise CodeGenerationError("'continue' outside of loop")
+            self._emit(f"JUMP {self.loop_continue_labels[-1]}")
+            return
+
+        if isinstance(stmt, BreakStmt):
+            if not self.loop_break_labels:
+                raise CodeGenerationError("'break' outside of loop")
+            self._emit(f"JUMP {self.loop_break_labels[-1]}")
+            return
+
         if isinstance(stmt, VarDecl):
             var_type = self._type_string(stmt.var_type)
             self._emit(f"LOCAL {var_type} {stmt.name}")

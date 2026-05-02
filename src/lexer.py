@@ -65,6 +65,9 @@ class TokenType(enum.Enum):
     SIZEOF = "sizeof"
     STRUCT = "struct"
     TYPEDEF = "typedef"
+    FOR = "for"
+    CONTINUE = "continue"
+    BREAK = "break"
 
 
 KEYWORD_TOKENS = {
@@ -79,6 +82,9 @@ KEYWORD_TOKENS = {
     "sizeof": TokenType.SIZEOF,
     "struct": TokenType.STRUCT,
     "typedef": TokenType.TYPEDEF,
+    "for": TokenType.FOR,
+    "continue": TokenType.CONTINUE,
+    "break": TokenType.BREAK,
 }
 
 

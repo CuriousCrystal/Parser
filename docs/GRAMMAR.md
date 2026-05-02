@@ -17,13 +17,20 @@ type_specifier   ::= 'int' | 'char' | 'float' | 'void'
 statement        ::= compound_statement
                    | if_statement
                    | while_statement
+                   | for_statement
                    | return_statement
+                   | continue_statement
+                   | break_statement
                    | declaration
                    | expression_statement
 
 compound_statement ::= '{' (declaration | statement)* '}'
 if_statement     ::= 'if' '(' expression ')' statement ('else' statement)?
 while_statement  ::= 'while' '(' expression ')' statement
+for_statement    ::= 'for' '(' for_init? ';' expression? ';' expression? ')' statement
+for_init         ::= declaration | expression_statement
+continue_statement ::= 'continue' ';'
+break_statement  ::= 'break' ';'
 return_statement ::= 'return' expression? ';'
 expression_statement ::= expression ';'
 

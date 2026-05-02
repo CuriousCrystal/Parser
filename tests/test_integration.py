@@ -15,3 +15,15 @@ def test_integration_compile_sample1():
     ir = CodeGenerator().generate(program)
     assert "FUNC main" in ir
     assert "RETURN" in ir
+
+
+def test_integration_compile_for_demo():
+    sample_path = pathlib.Path(__file__).parent.parent / "examples" / "for_demo.c"
+    source = sample_path.read_text(encoding="utf-8")
+    program = Parser(Lexer(source)).parse_program()
+    errors = SemanticAnalyzer().analyze(program)
+    assert errors == []
+    ir = CodeGenerator().generate(program)
+    assert "FUNC main" in ir
+    assert "JUMP_IF_FALSE" in ir
+    assert "RETURN sum" in ir

@@ -9,11 +9,14 @@ from .ast import (
     ArrayInit,
     ArrayType,
     BinaryOp,
+    BreakStmt,
     CallExpr,
     CompoundStmt,
+    ContinueStmt,
     Dereference,
     Expr,
     ExprStmt,
+    ForStmt,
     FunctionDecl,
     Identifier,
     IfStmt,
@@ -33,6 +36,12 @@ from .ast import (
     WhileStmt,
 )
 from .errors import ParserError
+
+# Backward‑compatible alias: older code (e.g., __main__.py) expects a name
+# ``ParseError`` to be exported from this module.  The actual exception class
+# is ``ParserError`` defined in ``errors.py``.  Providing an alias avoids import
+# errors without altering the original exception hierarchy.
+ParseError = ParserError
 from .lexer import Lexer, Token, TokenType
 
 
@@ -218,6 +227,12 @@ class Parser:
             self._expect(TokenType.RPAREN)
             body = self._parse_statement()
             return WhileStmt(condition=condition, body=body)
+        if self._match(TokenType.FOR):
+            return self._parse_for_statement()
+        if self._match(TokenType.CONTINUE):
+            return self._parse_continue_statement()
+        if self._match(TokenType.BREAK):
+            return self._parse_break_statement()
         if self._is_type_specifier():
             decl = self._parse_declaration()
             return decl
@@ -235,6 +250,45 @@ class Parser:
             statements.append(self._parse_statement())
         self._expect(TokenType.RBRACE)
         return CompoundStmt(statements=statements)
+
+    def _parse_for_statement(self) -> ForStmt:
+        # Assume current token is the 'for' keyword
+        self._expect(TokenType.FOR)
+        self._expect(TokenType.LPAREN)
+
+        # Init clause (could be a declaration or an expression-statement or empty)
+        init = None
+        if self.current.type != TokenType.SEMICOLON:
+            if self._is_type_specifier():
+                init = self._parse_declaration()
+            else:
+                init = self._parse_expression_statement()
+        self._expect(TokenType.SEMICOLON)
+
+        # Condition clause
+        condition = None
+        if self.current.type != TokenType.SEMICOLON:
+            condition = self._parse_expression()
+        self._expect(TokenType.SEMICOLON)
+
+        # Update clause
+        update = None
+        if self.current.type != TokenType.RPAREN:
+            update = self._parse_expression()
+        self._expect(TokenType.RPAREN)
+
+        body = self._parse_statement()
+        return ForStmt(init=init, condition=condition, update=update, body=body)
+
+    def _parse_continue_statement(self) -> ContinueStmt:
+        self._expect(TokenType.CONTINUE)
+        self._expect(TokenType.SEMICOLON)
+        return ContinueStmt()
+
+    def _parse_break_statement(self) -> BreakStmt:
+        self._expect(TokenType.BREAK)
+        self._expect(TokenType.SEMICOLON)
+        return BreakStmt()
 
     # ------------------------------------------------------------------
     # expressions with postfix/unary operators
@@ -260,7 +314,8 @@ class Parser:
             expr = BinaryOp(left=expr, operator=operator, right=right)
         return expr
 
-            expression = self._parse_expression()
+    def _parse_relational(self) -> Expr:
+        """Parse relational expressions (<, >, <=, >=)."""
         expr = self._parse_additive()
         while self.current.type in {TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE}:
             operator = self.current.lexeme
