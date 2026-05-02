@@ -14,9 +14,10 @@
 python -m src examples\sample1.c
 python -m src examples\sample2.c
 python -m src examples\for_demo.c
+python -m src --visualize-ast examples\for_demo.c
 ```
 
-The output is a simple IR representation produced by `src/codegen.py`.
+The output is a simple IR representation produced by `src/codegen.py`, or a Mermaid AST diagram when using `--visualize-ast`.
 
 ## Example 3
 

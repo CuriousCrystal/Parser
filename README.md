@@ -11,3 +11,6 @@ tests – a pytest suite (test_lexer.py, test_parser.py, test_integration.py) th
 docs – documentation covering the architecture, usage examples, and the language grammar.
 
 Overall, the project demonstrates the classic compiler pipeline—lexical analysis, parsing, semantic analysis, and code generation—implemented in Python, making it a useful educational reference for building language tools. The language subset now includes C-like control structures such as `for` loops, `continue`, and `break`, with example programs and generated IR output provided for testing.
+
+The compiler also supports AST visualization using Mermaid syntax: `python -m src --visualize-ast examples/for_demo.c`.
+
